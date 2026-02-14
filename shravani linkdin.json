@@ -1,0 +1,318 @@
+{
+  "name": "shravani linkdin",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bKGtAJUeRauMJWAFAM94tn6Y3bM5dT2_RSbsPkQNwL0",
+          "mode": "list",
+          "cachedResultName": "linkedln",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bKGtAJUeRauMJWAFAM94tn6Y3bM5dT2_RSbsPkQNwL0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1bKGtAJUeRauMJWAFAM94tn6Y3bM5dT2_RSbsPkQNwL0/edit?pli=1&gid=0#gid=0",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        704,
+        160
+      ],
+      "id": "3354551e-9ace-4f78-a714-c41e6e7e8f28",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FUAEOyiZ7dkyDSwj",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"api_key\": \"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\",\n  \"query\": \"what are the latest updates on {{$json.post}}\",\n  \"search_depth\": \"basic\",\n  \"chunks_per_source\": 3,\n  \"max_results\": 3,\n  \"topic\": \"general\",\n  \"time_range\": null,\n  \"start_date\": \"2025-02-09\",\n  \"end_date\": \"2025-12-29\",\n  \"include_answer\": true,\n  \"include_raw_content\": true,\n  \"include_images\": true,\n  \"include_image_descriptions\": true,\n  \"include_favicon\": true,\n  \"include_domains\": [],\n  \"exclude_domains\": [],\n  \"country\": null,\n  \"auto_parameters\": true,\n  \"include_usage\": true\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        928,
+        160
+      ],
+      "id": "33f973da-d393-4739-b1d5-32bc432b5bb7",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=topic for linkdin post :{{ $('Get row(s) in sheet').item.json['rough topic name'] }}\n\nreference title and articles\n\ntitle 1: {{ $json.results[0].title }}\narticle 1:{{ $json.results[0].content }}\nurl 1:{{ $json.results[0].url }}\n\ntitle 2:{{ $json.results[1].title }}\narticle 2:{{ $json.results[1].content }}\nurl 2:{{ $json.results[1].url }}\n\ntitle 3 :{{ $json.results[2].title }}\narticle 3:{{ $json.results[2].content }}\nurl 3:{{ $json.results[2].url }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "# Role\nAct like a LinkedIn expert who specializes in generating LinkedIn friendly post. You content is engaging for the audience and has a tendency to go viral.\n\n# To do\n- You'll get 3 references which will include title of the article, parsed content which is relevant to the topic of post, URL from which content is parsed.\n- Using all this information, you have generate a linkedIn friendly post which will get us engagement so that we can have an active profile.\n\n# Output\n- Return the title and the content of the article as, Title: Content:"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1152,
+        160
+      ],
+      "id": "8eb88c62-03ea-42d4-92ca-ae6e2a4822fe",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        384
+      ],
+      "id": "976d6f3f-cab3-4aa1-a892-f41ac11d703b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "4frR4qolVI84YyXi",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"state\": {\n      \"type\": \"string\",\n      \"description\": \"Main title or headline of the content\"\n    },\n    \"cities\": {\n      \"type\": \"array\",\n      \"description\": \"List containing the main body content as strings\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\"state\", \"cities\"],\n  \"additionalProperties\": false\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1296,
+        384
+      ],
+      "id": "a3b4afb6-7a43-4d9a-9c59-dd7b3be590e7",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1bKGtAJUeRauMJWAFAM94tn6Y3bM5dT2_RSbsPkQNwL0",
+          "mode": "list",
+          "cachedResultName": "linkedln",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bKGtAJUeRauMJWAFAM94tn6Y3bM5dT2_RSbsPkQNwL0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1bKGtAJUeRauMJWAFAM94tn6Y3bM5dT2_RSbsPkQNwL0/edit?pli=1&gid=0#gid=0",
+          "mode": "url"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "post"
+          ],
+          "schema": [
+            {
+              "id": "post",
+              "displayName": "post",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        160
+      ],
+      "id": "fdf85900-ece1-42be-a138-4476770fd43e",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "FUAEOyiZ7dkyDSwj",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "=https://www.linkedin.com/in/shravani-dhuri-986b6a317/",
+        "text": "={{ $json.output.cities[0] }}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        160
+      ],
+      "id": "adc091de-c86b-4966-8ed4-426c5c6adaa6",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "BwOMhBX3W8Q4AAYg",
+          "name": "LinkedIn account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "6c406b3f-ea54-4618-9dea-80c30554500d",
+      "name": "Weekly Sunday Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        160
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Sunday Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0520d75a-fc0a-4f49-acbc-4a0bae5645cd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7d3b91028a2505d01a199170235c83b6c3e9dc6306ac8357167515afd7993d65"
+  },
+  "id": "zvFuw65PS3Dywebu",
+  "tags": []
+}
